@@ -17,7 +17,7 @@ int main(int argc, char const *argv[])
 	{
 		printf("Usage: ./1712571 url [outputfile]\n");
 		printf("Example: ./1712571 example.com/index.html index.html\n");
-		return -1;
+		exit(0);
 	}
 
 	struct addrinfo *result, hints;
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
 	int outfile;
 	if (argc == 3)
 	{
-		outfile = open(argv[2], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+		outfile = open(argv[2], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
 		if (outfile == -1) printf("open %s file to output failed", argv[2]);
 	}
 
