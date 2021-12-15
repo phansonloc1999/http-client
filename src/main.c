@@ -11,14 +11,19 @@
 
 #define HTTP_PORT_80 "80"
 
-int main(int argc, char const *argv[])
+void printUsage(int argc)
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
 		printf("Usage: ./1712571 url [outputfile]\n");
 		printf("Example: ./1712571 example.com/index.html index.html\n");
 		exit(0);
 	}
+}
+
+int main(int argc, char const *argv[])
+{
+	printUsage(argc);
 
 	struct addrinfo *result, hints;
 	int sock, rwerr = 42, ai_family = AF_INET;
@@ -64,7 +69,7 @@ int main(int argc, char const *argv[])
 
 	write(sock, request, strlen(request));
 
-	shutdown(sock, SHUT_WR);
+	shutdown(sock, SHUT_WR); // Prevent further writing data to socket 
 
 	int outfile;
 	if (argc == 3)
