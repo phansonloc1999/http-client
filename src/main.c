@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
 	int outfile;
 	if (argc == 3)
 	{
-		outfile = open(argv[2], O_WRONLY | O_CREAT);
+		outfile = open(argv[2], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 		if (outfile == -1) printf("open %s file to output failed", argv[2]);
 	}
 
@@ -79,7 +79,6 @@ int main(int argc, char const *argv[])
 		if (argc != 3) write(1, buf, rwerr);
 		else write(outfile, buf, rwerr);
 	}
-
 
 	close(sock);
 	close(outfile);
