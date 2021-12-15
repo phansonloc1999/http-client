@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
 	}
 
 	struct addrinfo *result, hints;
-	int sock, rwerr = 42, outfile, ai_family = AF_INET;
+	int sock, rwerr = 42, ai_family = AF_INET;
 	char *request, buf[16], port[6], c;
 
 	char *url = strdup(argv[1]);
@@ -29,7 +29,6 @@ int main(int argc, char const *argv[])
 	char domain[100];
 	char rest[100];
 	sscanf(url, "%[a-zA-Z]://%[0-9a-zA-Z.]/%[0-9a-zA-Z./]", protocol, domain, rest);
-	printf("%s %s %s\n", protocol, domain, rest);
 
 	if (strcmp(protocol, "http") != 0)
 	{
@@ -67,13 +66,23 @@ int main(int argc, char const *argv[])
 
 	shutdown(sock, SHUT_WR);
 
+	int outfile;
+	if (argc == 3)
+	{
+		outfile = open(argv[2], O_WRONLY | O_CREAT);
+		if (outfile == -1) printf("open %s file to output failed", argv[2]);
+	}
+
 	while (rwerr > 0)
 	{
 		rwerr = read(sock, buf, 16);
-		write(1, buf, rwerr);
+		if (argc != 3) write(1, buf, rwerr);
+		else write(outfile, buf, rwerr);
 	}
 
+
 	close(sock);
+	close(outfile);
 
 	return 0;
 }
