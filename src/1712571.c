@@ -27,8 +27,7 @@ int main(int argc, char const *argv[])
 
 	struct addrinfo *result, hints;
 	int sock, rwerr = 42, ai_family = AF_INET;
-	const int bufferSize = 1024;
-	char *request, buffer[bufferSize], port[6], c;
+	char *request, port[6], c;
 
 	char *url = strdup(argv[1]);
 	char protocol[4];
@@ -79,12 +78,30 @@ int main(int argc, char const *argv[])
 		if (outfile == -1) printf("open %s file to output failed", argv[2]);
 	}
 
-	while (rwerr > 0)
-	{
-		rwerr = read(sock, buffer, 16);
-		write(outfile, buffer, rwerr);
-	}
+	const int bufferSize = 16;
+	char buffer[bufferSize];
+	int receivedLen = 0, contentLength;
+	char *response = (char*)malloc(0);
+	char *contentLengthStr = NULL;
 
+	while ((receivedLen = recv(sock, buffer, bufferSize-1, 0)) > 0)
+	{
+		buffer[receivedLen] = '\0';
+		response = (char*)realloc(response, strlen(response) + strlen(buffer) + 1);
+		sprintf(response, "%s%s", response, buffer);	
+
+		if (strstr(response, "\r\n\r\n") != NULL)
+		{
+			contentLengthStr = strstr(response, "Content-Length");
+			if (contentLengthStr != NULL)
+			{
+				contentLength = atoi((char*)(strchr(contentLengthStr,':') + 1));
+				printf("%d\n", contentLength);
+				// exit(0);
+			}
+		}
+	}
+	
 	close(sock);
 	close(outfile);
 
