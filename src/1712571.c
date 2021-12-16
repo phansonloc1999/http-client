@@ -27,7 +27,8 @@ int main(int argc, char const *argv[])
 
 	struct addrinfo *result, hints;
 	int sock, rwerr = 42, ai_family = AF_INET;
-	char *request, buf[16], port[6], c;
+	const int bufferSize = 1024;
+	char *request, buffer[bufferSize], port[6], c;
 
 	char *url = strdup(argv[1]);
 	char protocol[4];
@@ -80,9 +81,8 @@ int main(int argc, char const *argv[])
 
 	while (rwerr > 0)
 	{
-		rwerr = read(sock, buf, 16);
-		if (argc != 3) write(1, buf, rwerr);
-		else write(outfile, buf, rwerr);
+		rwerr = read(sock, buffer, 16);
+		write(outfile, buffer, rwerr);
 	}
 
 	close(sock);
