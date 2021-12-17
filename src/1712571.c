@@ -28,7 +28,7 @@ void receiveResponse(int sock, int outfile)
 	const int bufferSize = 16;
 	char buffer[bufferSize];
 	int receivedLen = 0, contentLength;
-	char *response = (char *)malloc(0);
+	char *response = (char *)malloc(1);
 	char *contentLengthStr = NULL, *dataPtr = NULL, *chunkedEncoding = NULL;
 	bool skip = false;
 
@@ -49,7 +49,6 @@ void receiveResponse(int sock, int outfile)
 				chunkedEncoding = strcasestr(response, "transfer-encoding: chunked");
 				if (chunkedEncoding != NULL)
 				{
-
 				}
 				else
 				{
@@ -61,7 +60,7 @@ void receiveResponse(int sock, int outfile)
 					}
 				}
 				dataPtr = dataPtr + 4; // Move right 4 bytes to skip "\r\n\r\n"
-				
+
 				skip = true;
 			}
 		}
@@ -111,10 +110,10 @@ int main(int argc, char const *argv[])
 	if (connect(sock, result->ai_addr, result->ai_addrlen) == -1)
 		printf("connect failed");
 
-	request = (char *)malloc(1000);
+	request = (char *)malloc(2000);
 
 	sprintf(request, "GET /%s HTTP/1.1\nHost: %s\nUser-agent: my http client\n\n", rest, domain);
-	printf("%s\n\n\n\n", request);
+	write(1, request, strlen(request));
 
 	write(sock, request, strlen(request));
 

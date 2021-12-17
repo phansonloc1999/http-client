@@ -1,5 +1,5 @@
 all: src/1712571.c
-	gcc src/1712571.c -o 1712571
+	gcc src/1712571.c -o src/1712571
 
-clean: 1712571
-	rm 1712571
+clean: src/1712571
+	rm src/1712571
