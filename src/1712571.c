@@ -10,8 +10,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <math.h>
 
 #define HTTP_PORT_80 "80"
+#define CRLF "\r\n"
+#define CRLF_LENGTH 2
 
 void printUsage(int argc)
 {
@@ -21,6 +24,45 @@ void printUsage(int argc)
 		printf("Example: ./1712571 example.com/index.html index.html\n");
 		exit(0);
 	}
+}
+
+int hexToDec(char* hex)
+{
+    long long decimal, place;
+    int i = 0, val, len;
+
+    decimal = 0;
+    place = 1;
+
+    /* Find the length of total number of hex digit */
+    len = strlen(hex);
+    len--;
+
+    /*
+     * Iterate over each hex digit
+     */
+    for(i=0; hex[i]!='\0'; i++)
+    {
+ 
+        /* Find the decimal representation of hex[i] */
+        if(hex[i]>='0' && hex[i]<='9')
+        {
+            val = hex[i] - 48;
+        }
+        else if(hex[i]>='a' && hex[i]<='f')
+        {
+            val = hex[i] - 97 + 10;
+        }
+        else if(hex[i]>='A' && hex[i]<='F')
+        {
+            val = hex[i] - 65 + 10;
+        }
+
+        decimal += val * pow(16, len);
+        len--;
+    }
+
+	return decimal;
 }
 
 void receiveResponse(int sock, int outfile)
@@ -34,7 +76,6 @@ void receiveResponse(int sock, int outfile)
 
 	while ((receivedLen = recv(sock, buffer, bufferSize - 1, 0)) > 0)
 	{
-		buffer[receivedLen] = '\0'; // Last is the null terminating character
 		response = (char *)realloc(response, strlen(response) + strlen(buffer) + 1);
 		sprintf(response, "%s%s", response, buffer); // Append buffer to response
 
@@ -49,6 +90,7 @@ void receiveResponse(int sock, int outfile)
 				chunkedEncoding = strcasestr(response, "transfer-encoding: chunked");
 				if (chunkedEncoding != NULL)
 				{
+				
 				}
 				else
 				{
@@ -65,8 +107,25 @@ void receiveResponse(int sock, int outfile)
 			}
 		}
 	}
+	
+	if (chunkedEncoding != NULL)
+	{
+		int byteCount;
+		char *token = strtok(dataPtr, CRLF);
+		do
+		{
+			sscanf(token, "%x", &byteCount);
 
-	write(outfile, dataPtr, strlen(dataPtr));
+			token = strtok(NULL, CRLF);
+			token[strlen(token)] = '\n'; // Change null terminated back to \n caused by strtok
+
+			write(outfile, token, byteCount);
+
+			token = token + byteCount + CRLF_LENGTH;
+			token = strtok(token, CRLF);
+		} while (byteCount != 0);
+	}
+	else write(outfile, dataPtr, strlen(dataPtr));
 }
 
 int main(int argc, char const *argv[])
