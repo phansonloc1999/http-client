@@ -27,9 +27,8 @@ void receiveResponse(int sock, int outfile)
 	const int bufferSize = 16;
 	char buffer[bufferSize];
 	int receivedLen = 0, contentLength;
-	char *response = (char *)malloc(0);
-	char *contentLengthStr = NULL;
-	char *dataPtr = NULL;
+	char *response = (char*)malloc(0);
+	char *contentLengthStr = NULL, *dataPtr = NULL, *chunkedEncoding = NULL;
 	bool skip = false;
 
 	while ((receivedLen = recv(sock, buffer, bufferSize - 1, 0)) > 0)
@@ -46,14 +45,20 @@ void receiveResponse(int sock, int outfile)
 			}
 			else
 			{
+				chunkedEncoding = strstr(response, "chunked");
+				if (chunkedEncoding != NULL)
+				{
+					write(1, chunkedEncoding, strlen("chunked"));
+				}
+
 				// Get content length value after the character ':'
 				contentLengthStr = strstr(response, "Content-Length");
 				if (contentLengthStr != NULL)
 				{
-					contentLength = atoi((char *)(strchr(contentLengthStr, ':') + 1));
+					contentLength = atoi(strchr(contentLengthStr, ':') + 1);
 				}
 
-				dataPtr = dataPtr + 4; // Move right 4 bytes to skip \r\n\r\n
+				dataPtr = dataPtr + 4; // Move right 4 bytes to skip "\r\n\r\n"
 
 				skip = true;
 			}
