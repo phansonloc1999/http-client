@@ -7,7 +7,7 @@ $(MSSV): src/$(MSSV).c
 	gcc src/$(MSSV).c -o output/$(MSSV) -lm
 
 clean:
-	rm -rf output
+	rm -rf output/*
 
 run: $(MSSV)
 	./output/$(MSSV) http://jigsaw.w3.org/HTTP/ChunkedScript output/jigsaw_chunkedscript.html

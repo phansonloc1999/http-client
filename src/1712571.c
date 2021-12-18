@@ -152,10 +152,9 @@ int main(int argc, char const *argv[])
 	char *request, port[6], c;
 
 	char *url = strdup(argv[1]);
-	char protocol[4];
-	char domain[100];
-	char rest[100];
-	sscanf(url, "%[a-zA-Z]://%[0-9a-zA-Z.]/%[0-9a-zA-Z./]", protocol, domain, rest);
+	char protocol[4], domain[100], fileAbsolutePath[100];
+	const char *urlFormat = "%[a-zA-Z]://%[0-9a-zA-Z.]/%[0-9a-zA-Z./]";
+	sscanf(url, urlFormat, protocol, domain, fileAbsolutePath);
 
 	if (strcmp(protocol, "http") != 0)
 	{
@@ -186,7 +185,7 @@ int main(int argc, char const *argv[])
 
 	request = (char *)malloc(2000);
 
-	sprintf(request, "GET /%s HTTP/1.1\nHost: %s\nUser-agent: my http client\n\n", rest, domain);
+	sprintf(request, "GET /%s HTTP/1.1\nHost: %s\nUser-agent: my http client\n\n", fileAbsolutePath, domain);
 	write(1, request, strlen(request));
 
 	write(sock, request, strlen(request));
