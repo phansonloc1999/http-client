@@ -26,41 +26,41 @@ void printUsage(int argc)
 	}
 }
 
-int hexToDec(char* hex)
+int hexToDec(char *hex)
 {
-    long long decimal, place;
-    int i = 0, val, len;
+	long long decimal, place;
+	int i = 0, val, len;
 
-    decimal = 0;
-    place = 1;
+	decimal = 0;
+	place = 1;
 
-    /* Find the length of total number of hex digit */
-    len = strlen(hex);
-    len--;
+	/* Find the length of total number of hex digit */
+	len = strlen(hex);
+	len--;
 
-    /*
-     * Iterate over each hex digit
-     */
-    for(i=0; hex[i]!='\0'; i++)
-    {
- 
-        /* Find the decimal representation of hex[i] */
-        if(hex[i]>='0' && hex[i]<='9')
-        {
-            val = hex[i] - 48;
-        }
-        else if(hex[i]>='a' && hex[i]<='f')
-        {
-            val = hex[i] - 97 + 10;
-        }
-        else if(hex[i]>='A' && hex[i]<='F')
-        {
-            val = hex[i] - 65 + 10;
-        }
+	/*
+	 * Iterate over each hex digit
+	 */
+	for (i = 0; hex[i] != '\0'; i++)
+	{
 
-        decimal += val * pow(16, len);
-        len--;
-    }
+		/* Find the decimal representation of hex[i] */
+		if (hex[i] >= '0' && hex[i] <= '9')
+		{
+			val = hex[i] - 48;
+		}
+		else if (hex[i] >= 'a' && hex[i] <= 'f')
+		{
+			val = hex[i] - 97 + 10;
+		}
+		else if (hex[i] >= 'A' && hex[i] <= 'F')
+		{
+			val = hex[i] - 65 + 10;
+		}
+
+		decimal += val * pow(16, len);
+		len--;
+	}
 
 	return decimal;
 }
@@ -90,7 +90,6 @@ void receiveResponse(int sock, int outfile)
 				chunkedEncoding = strcasestr(response, "transfer-encoding: chunked");
 				if (chunkedEncoding != NULL)
 				{
-				
 				}
 				else
 				{
@@ -107,27 +106,39 @@ void receiveResponse(int sock, int outfile)
 			}
 		}
 	}
-	
+
 	// write(outfile, response, strlen(response));
 
-	if (chunkedEncoding != NULL)
+	if (dataPtr != NULL)
 	{
-		int byteCount;
-		char *token = strtok(dataPtr, CRLF);
-		do
+		if (chunkedEncoding != NULL)
 		{
-			sscanf(token, "%x", &byteCount);
+			int byteCount;
+			int nextByteCount;
+			char *token = strtok(dataPtr, CRLF);
+			do
+			{
+				sscanf(token, "%x", &byteCount);
 
-			token = strtok(NULL, CRLF);
-			token[strlen(token)] = '\n'; // Change null terminated back to \n caused by strtok
+				token = strtok(NULL, CRLF);
+				token[strlen(token)] = '\n'; // Change null terminated back to \n caused by strtok
 
-			write(outfile, token, byteCount);
+				char *dataToWrite = token;
+				token = token + byteCount + CRLF_LENGTH;
+				token = strtok(token, CRLF);
+				sscanf(token, "%x", &nextByteCount);
+				if (nextByteCount == 0)
+				{
+					// Next byte count is 0 => EOF, do not write the trailing \n
+					byteCount = byteCount - 1;
+				}
 
-			token = token + byteCount + CRLF_LENGTH;
-			token = strtok(token, CRLF);
-		} while (byteCount != 0);
+				write(outfile, dataToWrite, byteCount);
+			} while (nextByteCount != 0);
+		}
+		else
+			write(outfile, dataPtr, contentLength - 1);
 	}
-	else write(outfile, dataPtr, contentLength);
 
 	free(response);
 }
