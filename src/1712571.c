@@ -69,12 +69,12 @@ void receiveResponse(int sock, int outfile)
 {
 	const int bufferSize = 16;
 	char buffer[bufferSize];
-	int receivedLen = 0, contentLength;
+	int contentLength;
 	char *response = (char *)malloc(1);
 	char *contentLengthStr = NULL, *dataPtr = NULL, *chunkedEncoding = NULL;
 	bool skip = false;
 
-	while ((receivedLen = recv(sock, buffer, bufferSize - 1, 0)) > 0)
+	while (recv(sock, buffer, bufferSize - 1, 0) > 0)
 	{
 		response = (char *)realloc(response, strlen(response) + strlen(buffer) + 1);
 		sprintf(response, "%s%s", response, buffer); // Append buffer to response
@@ -108,6 +108,8 @@ void receiveResponse(int sock, int outfile)
 		}
 	}
 	
+	// write(outfile, response, strlen(response));
+
 	if (chunkedEncoding != NULL)
 	{
 		int byteCount;
@@ -125,7 +127,9 @@ void receiveResponse(int sock, int outfile)
 			token = strtok(token, CRLF);
 		} while (byteCount != 0);
 	}
-	else write(outfile, dataPtr, strlen(dataPtr));
+	else write(outfile, dataPtr, contentLength);
+
+	free(response);
 }
 
 int main(int argc, char const *argv[])
@@ -175,6 +179,7 @@ int main(int argc, char const *argv[])
 	write(1, request, strlen(request));
 
 	write(sock, request, strlen(request));
+	free(request);
 
 	shutdown(sock, SHUT_WR); // Prevent further writing data to socket
 
