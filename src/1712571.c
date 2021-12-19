@@ -67,17 +67,18 @@ int hexToDec(char *hex)
 
 void receiveResponse(int sock, int outfile)
 {
-	const int bufferSize = 16;
+	const int bufferSize = 10;
 	char buffer[bufferSize];
 	int contentLength;
-	char *response = (char *)malloc(1);
+	char *response = (char*)calloc(1000, sizeof(char)); // Alloc 1000 memory blocks to 0
 	char *contentLengthStr = NULL, *dataPtr = NULL, *chunkedEncoding = NULL;
 	bool skip = false;
 
 	while (recv(sock, buffer, bufferSize - 1, 0) > 0)
 	{
-		response = (char *)realloc(response, strlen(response) + strlen(buffer) + 1);
-		sprintf(response, "%s%s", response, buffer); // Append buffer to response
+		response = (char*)realloc(response, strlen(response) + strlen(buffer) + 1);
+		response = strcat(response, buffer);
+		memset(buffer, 0, bufferSize); // Reset buffer memory to all 0s
 
 		if (skip == false)
 		{
@@ -88,10 +89,7 @@ void receiveResponse(int sock, int outfile)
 			else
 			{
 				chunkedEncoding = strcasestr(response, "transfer-encoding: chunked");
-				if (chunkedEncoding != NULL)
-				{
-				}
-				else
+				if (chunkedEncoding == NULL)
 				{
 					// Get content length value after the character ':'
 					contentLengthStr = strcasestr(response, "content-length");
@@ -107,8 +105,6 @@ void receiveResponse(int sock, int outfile)
 		}
 	}
 
-	// write(outfile, response, strlen(response));
-
 	if (dataPtr != NULL)
 	{
 		if (chunkedEncoding != NULL)
@@ -119,6 +115,9 @@ void receiveResponse(int sock, int outfile)
 			do
 			{
 				sscanf(token, "%x", &byteCount);
+				char str[20];
+				sprintf(str, "Byte count: %d ", byteCount);
+				write(1, str, strlen(str));
 
 				token = strtok(NULL, CRLF);
 				token[strlen(token)] = '\n'; // Change null terminated back to \n caused by strtok
