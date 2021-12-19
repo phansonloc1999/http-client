@@ -14,3 +14,4 @@ run: $(MSSV)
 	./output/$(MSSV) http://example.com output/example.com_index.html
 	./output/$(MSSV) http://anglesharp.azurewebsites.net/Chunked output/azure_chunked.html
 	./output/$(MSSV) http://info.cern.ch/ output/infocern_index.html
+	@echo "Done! Check output folder"
