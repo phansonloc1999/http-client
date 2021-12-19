@@ -13,3 +13,4 @@ run: $(MSSV)
 	./output/$(MSSV) http://jigsaw.w3.org/HTTP/ChunkedScript output/jigsaw_chunkedscript.html
 	./output/$(MSSV) http://example.com output/example.com_index.html
 	./output/$(MSSV) http://anglesharp.azurewebsites.net/Chunked output/azure_chunked.html
+	./output/$(MSSV) http://info.cern.ch/ output/infocern_index.html

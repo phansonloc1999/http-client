@@ -65,7 +65,7 @@ int hexToDec(char *hex)
 	return decimal;
 }
 
-void receiveResponse(int sock, int outfile)
+void receiveResponse(int sock, int outputFile)
 {
 	const int bufferSize = 10;
 	char buffer[bufferSize];
@@ -115,9 +115,6 @@ void receiveResponse(int sock, int outfile)
 			do
 			{
 				sscanf(token, "%x", &byteCount);
-				char str[20];
-				sprintf(str, "Byte count: %d ", byteCount);
-				write(1, str, strlen(str));
 
 				token = strtok(NULL, CRLF);
 				token[strlen(token)] = '\n'; // Change null terminated back to \n caused by strtok
@@ -126,17 +123,18 @@ void receiveResponse(int sock, int outfile)
 				token = token + byteCount + CRLF_LENGTH;
 				token = strtok(token, CRLF);
 				sscanf(token, "%x", &nextByteCount);
-				if (nextByteCount == 0)
+				
+				// Next byte count is 0 => end of data and last byte is newline character 
+				if (nextByteCount == 0 && dataToWrite[byteCount-1] == '\n')
 				{
-					// Next byte count is 0 => EOF, do not write the trailing \n
-					byteCount = byteCount - 1;
+					byteCount = byteCount - 1; // -1 to omit the last newline character
 				}
 
-				write(outfile, dataToWrite, byteCount);
+				write(outputFile, dataToWrite, byteCount);
 			} while (nextByteCount != 0);
 		}
 		else
-			write(outfile, dataPtr, contentLength - 1);
+			write(outputFile, dataPtr, contentLength - 1); // -1 to omit the last \r\n
 	}
 
 	free(response);
@@ -151,7 +149,7 @@ int main(int argc, char const *argv[])
 	char *request, port[6], c;
 
 	char *url = strdup(argv[1]);
-	char protocol[4], domain[100], fileAbsolutePath[100];
+	char protocol[10], domain[100], fileAbsolutePath[100];
 	const char *urlFormat = "%[a-zA-Z]://%[0-9a-zA-Z.]/%[0-9a-zA-Z./]";
 	sscanf(url, urlFormat, protocol, domain, fileAbsolutePath);
 
@@ -166,9 +164,9 @@ int main(int argc, char const *argv[])
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = ai_family;
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_socktype = SOCK_STREAM; // TCP uses stream socket
 
-	if (getaddrinfo(domain, port, &hints, &result) != 0)
+	if (getaddrinfo(domain, port, &hints, &result) != 0) // Domain name to socket address
 	{
 		printf("getaddrinfo failed");
 		return -1;
@@ -185,25 +183,24 @@ int main(int argc, char const *argv[])
 	request = (char *)malloc(2000);
 
 	sprintf(request, "GET /%s HTTP/1.1\nHost: %s\nUser-agent: my http client\n\n", fileAbsolutePath, domain);
-	write(1, request, strlen(request));
 
 	write(sock, request, strlen(request));
 	free(request);
 
 	shutdown(sock, SHUT_WR); // Prevent further writing data to socket
 
-	int outfile;
+	int outputFile;
 	if (argc == 3)
 	{
-		outfile = open(argv[2], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
-		if (outfile == -1)
+		outputFile = open(argv[2], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+		if (outputFile == -1)
 			printf("open %s file to output failed", argv[2]);
 	}
 
-	receiveResponse(sock, outfile);
+	receiveResponse(sock, outputFile);
 
 	close(sock);
-	close(outfile);
+	close(outputFile);
 
 	return 0;
 }
