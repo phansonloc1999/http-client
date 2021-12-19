@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -125,16 +126,16 @@ void receiveResponse(int sock, int outputFile)
 				sscanf(token, "%x", &nextByteCount);
 				
 				// Next byte count is 0 => end of data and last byte is newline character 
-				if (nextByteCount == 0 && dataToWrite[byteCount-1] == '\n')
-				{
-					byteCount = byteCount - 1; // -1 to omit the last newline character
-				}
+				// if (nextByteCount == 0 && dataToWrite[byteCount-1] == '\n')
+				// {
+				// 	byteCount = byteCount - 1; // -1 to omit the last newline character
+				// }
 
 				write(outputFile, dataToWrite, byteCount);
 			} while (nextByteCount != 0);
 		}
 		else
-			write(outputFile, dataPtr, contentLength - 1); // -1 to omit the last \r\n
+			write(outputFile, dataPtr, contentLength); // -1 to omit the last \r\n
 	}
 
 	free(response);
