@@ -197,10 +197,17 @@ int main(int argc, char const *argv[])
 			printf("open %s file to output failed", argv[2]);
 	}
 
-	receiveResponse(sock, outputFile);
+	if (fork() == 0)
+	{
+		receiveResponse(sock, outputFile);
+		
+		close(sock);
+		close(outputFile);
 
-	close(sock);
-	close(outputFile);
+		exit(0);
+	}
+
+	while (wait(NULL) > 0) {}
 
 	return 0;
 }
